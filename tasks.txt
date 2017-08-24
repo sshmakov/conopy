@@ -1,0 +1,3 @@
+Тесты				Тестовые папки
+    SQLite				Тест SQLite				test-sqlite.ini
+    Тест даты				Тест даты				Тест даты.ini
