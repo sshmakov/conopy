@@ -1,11 +1,8 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from executor import PyExecutor
-
-##try:
-##    import simpletreemodel_rc3
-##except ImportError:
-##    import simpletreemodel_rc2
-from toolbar import ToolBar
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from conopy.toolbar import ToolBar
+import sys
+import importlib
 
 class TreeItem(object):
     def __init__(self, data, parent=None):
@@ -43,7 +40,7 @@ class TreeItem(object):
         return self.data(2)
 
 
-class TreeModel(QtCore.QAbstractItemModel):
+class TreeModel(QAbstractItemModel):
     def __init__(self, data, parent=None):
         super(TreeModel, self).__init__(parent)
 
@@ -51,44 +48,44 @@ class TreeModel(QtCore.QAbstractItemModel):
         self.setupModelData(data.split('\n'), self.rootItem)
 
 
-    def columnCount(self, parent = QtCore.QModelIndex()):
+    def columnCount(self, parent = QModelIndex()):
         if parent.isValid():
             return parent.internalPointer().columnCount()
         else:
             return self.rootItem.columnCount()
 
-    def data(self, index, role = QtCore.Qt.DisplayRole):
+    def data(self, index, role = Qt.DisplayRole):
         if not index.isValid():
             return None
 
-        #if role != QtCore.Qt.DisplayRole and role != QtCore.Qt.UserRole :
+        #if role != Qt.DisplayRole and role != Qt.UserRole :
         #    return None
 
         item = index.internalPointer()
 
-        if role == QtCore.Qt.DisplayRole:
+        if role == Qt.DisplayRole:
             return item.data(index.column())
 
-        if role == QtCore.Qt.UserRole:
+        if role == Qt.UserRole:
             return item.proc()
         return None
 
     def flags(self, index):
         if not index.isValid():
-            return QtCore.Qt.NoItemFlags
+            return Qt.NoItemFlags
 
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.rootItem.data(section)
 
         return None
 
-    def index(self, row, column, parent = QtCore.QModelIndex()):
+    def index(self, row, column, parent = QModelIndex()):
         if not self.hasIndex(row, column, parent):
             print('no index',row, column, parent)
-            return QtCore.QModelIndex()
+            return QModelIndex()
 
         if not parent.isValid():
             parentItem = self.rootItem
@@ -99,21 +96,21 @@ class TreeModel(QtCore.QAbstractItemModel):
         if childItem:
             return self.createIndex(row, column, childItem)
         else:
-            return QtCore.QModelIndex()
+            return QModelIndex()
 
     def parent(self, index):
         if not index.isValid():
-            return QtCore.QModelIndex()
+            return QModelIndex()
 
         childItem = index.internalPointer()
         parentItem = childItem.parent()
 
         if parentItem == self.rootItem:
-            return QtCore.QModelIndex()
+            return QModelIndex()
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent = QtCore.QModelIndex()):
+    def rowCount(self, parent = QModelIndex()):
         if parent.column() > 0:
             return 0
 
@@ -165,36 +162,36 @@ class TreeModel(QtCore.QAbstractItemModel):
             number += 1
 
 
-class TreeWidget(QtWidgets.QTreeView):
+class TreeWidget(QTreeView):
     def __init__(self, parent=None):
         super(TreeWidget, self).__init__(parent)
         #self.doubleClicked.connect(self.handle_dblclick)
         
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.mdiArea = QtWidgets.QMdiArea(self)
+        self.mdiArea = QMdiArea(self)
         self.setCentralWidget(self.mdiArea)
-        self.mainMenu = QtWidgets.QMenuBar(self)
+        self.mainMenu = QMenuBar(self)
         self.setMenuBar(self.mainMenu)
         m = self.mainMenu.addMenu("Window")
         a = m.addAction("Cascade windows")
         a.triggered.connect(self.mdiArea.cascadeSubWindows)
         
-        self.treePanel = QtWidgets.QDockWidget("Дерево задач", self)
-        w = QtWidgets.QWidget(self.treePanel)
-        lay = QtWidgets.QVBoxLayout(w)
+        self.treePanel = QDockWidget("Дерево задач", self)
+        w = QWidget(self.treePanel)
+        lay = QVBoxLayout(w)
         lay.setSpacing(1)
         lay.setContentsMargins(1,1,1,1)
         w.setLayout(lay)
         self.tree = TreeWidget(self.treePanel)
         lay.addWidget(self.tree)
-        edit = QtWidgets.QTextEdit(w)
+        edit = QTextEdit(w)
         lay.addWidget(edit)
         
         self.treePanel.setWidget(w)
         self.tree.activated.connect(self.handle_dblclick)
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.treePanel)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
         
         self.tools = ToolBar(self)
         self.addToolBar(self.tools)
@@ -207,45 +204,57 @@ class MainWindow(QtWidgets.QMainWindow):
         return None
 
     def handle_dblclick(self, index):
-        proc = index.data(QtCore.Qt.UserRole)
-        if proc != None:
-            proc = proc.strip()
-            ex = PyExecutor(proc)
-            self.mdiArea.addSubWindow(ex)
-            ex.show()
+        try:
+            iniFile = index.data(Qt.UserRole)
+            if iniFile != None:
+                ini = QSettings(iniFile, QSettings.IniFormat)
+                ini.setIniCodec("utf-8")
+                exeClass = ["conopy.sqlexecutor", "PyExecutor"]
+                if "Common" in ini.childGroups():
+                    ini.beginGroup("Common")
+                    exeClass = ini.value("Executor", exeClass)
+                    ini.endGroup()
+                module = importlib.import_module(exeClass[0])
+                ex = eval("module.%s(iniFile)" % exeClass[1])
+                
+                #proc = proc.strip()
+                #ex = PyExecutor(proc)
+                if ex != None:
+                    self.mdiArea.addSubWindow(ex)
+                    ex.show()
+        except:
+            print(str(sys.exc_info()[1]))
+            
             
 
 view = None
 
-def focusedWindow():
-    if view == None:
-        return None
-    return view.focusedTaskWindow()
-
-if __name__ == '__main__':
-
+def run():
     import os
     import PyQt5
     import sys
 
     pyqt = os.path.dirname(PyQt5.__file__)
-    QtWidgets.QApplication.addLibraryPath(os.path.join(pyqt, "Qt/plugins"))
-    app = QtWidgets.QApplication(sys.argv)
-    app.focusedTaskWindow = focusedWindow
+    QApplication.addLibraryPath(os.path.join(pyqt, "Qt/plugins"))
 
-    f = QtCore.QFile('tasks.txt')
-    f.open(QtCore.QIODevice.ReadOnly)
+    app = QApplication(sys.argv)
+
+    f = QFile('tasks.txt')
+    f.open(QIODevice.ReadOnly)
     model = TreeModel(f.readAll())
     f.close()
 
     view = MainWindow()
-    view.setWindowTitle("Simple Tree Model")
+    view.setWindowTitle("Conopy")
     view.tree.setModel(model)
     view.tree.expandAll()
     view.tree.setColumnHidden(1,True)
+    app.focusedTaskWindow = view.focusedTaskWindow
     
     view.show()
     sys.exit(app.exec_())
 
+if __name__ == '__main__':
+    run()
     
     
