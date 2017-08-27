@@ -235,7 +235,7 @@ def run():
     import sys
 
     pyqt = os.path.dirname(PyQt5.__file__)
-    QApplication.addLibraryPath(os.path.join(pyqt, "Qt/plugins"))
+    QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "plugins"))
 
     app = QApplication(sys.argv)
 

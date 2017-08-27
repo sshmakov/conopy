@@ -156,14 +156,12 @@ class PyExecutor(QDialog):
             self.query = QSqlQuery(self.db)
             self.query.setNumericalPrecisionPolicy(QSql.HighPrecision)
             self.query.prepare(self.sql)
-            pi = 0
             for p in self.params:
                 key = p[0]
                 if key in self.inputs:
                     le = self.inputs[key]
                     par = ':'+key
                     self.query.bindValue(par, le.text())
-                    pi = pi + 1
             self.tr = QueryRunner(self.query)
             self.tr.finished.connect(self.showQueryResult)
             self.tr.start();
