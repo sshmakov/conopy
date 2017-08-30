@@ -1,8 +1,9 @@
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from conopy.toolbar import ToolBar
-import sys
-import importlib
+
+from executor import PyExecutor
+
+from toolbar import ToolBar
 
 class TreeItem(object):
     def __init__(self, data, parent=None):
@@ -193,7 +194,7 @@ class MainWindow(QMainWindow):
         self.tree.activated.connect(self.handle_dblclick)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
         
-        self.tools = ToolBar("tools.ini", self)
+        self.tools = ToolBar("tools.ini",self)
         self.addToolBar(self.tools)
         
 
@@ -204,39 +205,24 @@ class MainWindow(QMainWindow):
         return None
 
     def handle_dblclick(self, index):
-        try:
-            iniFile = index.data(Qt.UserRole)
-            if iniFile != None:
-                ini = QSettings(iniFile, QSettings.IniFormat)
-                ini.setIniCodec("utf-8")
-                exeClass = ["conopy.sqlexecutor", "PyExecutor"]
-                if "Common" in ini.childGroups():
-                    ini.beginGroup("Common")
-                    exeClass = ini.value("Executor", exeClass)
-                    ini.endGroup()
-                module = importlib.import_module(exeClass[0])
-                ex = eval("module.%s(iniFile)" % exeClass[1])
-                
-                #proc = proc.strip()
-                #ex = PyExecutor(proc)
-                if ex != None:
-                    self.mdiArea.addSubWindow(ex)
-                    ex.show()
-        except:
-            print(str(sys.exc_info()[1]))
-            
+        proc = index.data(Qt.UserRole)
+        if proc != None:
+            proc = proc.strip()
+            ex = PyExecutor(proc)
+            self.mdiArea.addSubWindow(ex)
+            ex.show()
             
 
 view = None
 
-def run():
+if __name__ == '__main__':
     import os
     import PyQt5
     import sys
 
     pyqt = os.path.dirname(PyQt5.__file__)
     QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "plugins"))
-
+    
     app = QApplication(sys.argv)
 
     f = QFile('tasks.txt')
@@ -254,7 +240,5 @@ def run():
     view.show()
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
-    run()
     
     

@@ -194,10 +194,6 @@ class MainWindow(QMainWindow):
         self.tree.activated.connect(self.handle_dblclick)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
         
-        #self.tools = ToolBar(self)
-        #self.addToolBar(self.tools)
-        
-
     def focusedTaskWindow(self):
         sub = self.mdiArea.currentSubWindow()
         if sub != None:
