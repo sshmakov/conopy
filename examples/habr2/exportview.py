@@ -11,8 +11,7 @@ class ob():
    def test(self):
       return 1
 
-def exportToExcel():
-   win = focusTaskWindow()
+def exportToExcel(win):
    if win == None:
       print("No focused window")
       return
@@ -80,8 +79,7 @@ def exportToExcel():
       QMessageBox.critical(None,'Export error',str(sys.exc_info()[1]))
       return
 
-def copyAsHtml():
-   win = focusTaskWindow()
+def copyAsHtml(win):
    if win == None:
       print("No focused window")
       return
@@ -134,12 +132,6 @@ def headerNames(model, minCol, maxCol):
     for col in range(minCol, maxCol+1):
         headers[col] = model.headerData(col, Qt.Horizontal)
     return headers
-
-def focusTaskWindow():
-    try:
-        return QApplication.instance().focusedTaskWindow()
-    except:
-        return None
 
 def focusItemView(win):
     if win == None: return None

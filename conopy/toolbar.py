@@ -27,7 +27,8 @@ class ToolBar(QToolBar):
             module = importlib.import_module(params[0])
             if len(params) < 2: func = "run()"
             else: func = params[1]
-            exec("module."+func)
+            win = self.focusTaskWindow()
+            exec("module.%s(win)" % func)
         except:
             print(str(sys.exc_info()[1]))
         return
@@ -37,16 +38,6 @@ class ToolBar(QToolBar):
             return QApplication.instance().focusedTaskWindow()
         except:
             return None
-
-    def focusItemView(self, win):
-        if win == None: return None
-        w = win.focusWidget()
-        if w != None and isinstance(w, QTableView):
-            return w
-        views = win.findChildren(QTableView)
-        if type(views) == type([]) and len(views)>0:
-            return views[0]
-        return None
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
