@@ -189,17 +189,8 @@ class PyExecutor(QDialog):
 
 
 if __name__ == '__main__':
-
-    #paths = QCoreApplication.libraryPaths()
-    #print("libraryPaths (before):", paths)
-    #paths.append("sqldrivers");
-    #QCoreApplication.setLibraryPaths(paths);
-    
     app = QApplication(sys.argv)
-    #print("libraryPaths (after):", QCoreApplication.libraryPaths())
-    #ex = PyExecutor("test-sqlite.ini")
-    ex = PyExecutor("Счета клиента.ini")
-
+    ex = PyExecutor("test-sqlite.ini")
     ex.show()
 
     sys.exit(app.exec_())
