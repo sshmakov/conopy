@@ -25,10 +25,10 @@ def exportToExcel(win):
    fileName = QFileDialog.getSaveFileName(None, 'Save Excel file', title,'Excel files (*.xlsx)')
    if fileName == ('',''): return
 
-   indexes = view.selectedIndexes()
+   indexes = view.selectionModel().selectedIndexes()
    if len(indexes) == 0:
       indexes = view.selectAll()
-      indexes = view.selectedIndexes()
+      indexes = view.selectionModel().selectedIndexes()
    model = view.model()
    d = sortedIndexes(indexes)
    headers = { col:model.headerData(col, Qt.Horizontal) for col in d.columns }
