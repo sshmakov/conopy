@@ -1,3 +1,5 @@
 Тесты				Тестовые папки
     SQLite				Тест SQLite				test-sqlite.ini
     QML Dynamic view			1					dynamicview.ini
+Web				Web-сервисы
+    Курсы валют				Курсы валют				valcurs.ini
