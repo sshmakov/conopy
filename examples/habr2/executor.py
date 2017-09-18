@@ -127,7 +127,7 @@ class PyExecutor(QDialog):
                 "Rows affected: {0}  Rows: {1}".format(
                     self.query.numRowsAffected(), self.query.size() ))
             res = self.query.result()
-            while res and res.isSelect():
+            while res and self.query.isSelect():
                 w = self.createTableView()
                 w.sqlModel = QSqlQueryModel(w)
                 w.sqlModel.setQuery(self.query)
