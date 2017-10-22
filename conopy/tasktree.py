@@ -4,7 +4,11 @@
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
-from conopy.toolbar import ToolBar
+import os
+if __package__ is None or __package__ == '':
+    from toolbar import ToolBar
+else:
+    from .toolbar import ToolBar
 import sys
 import importlib
 
@@ -45,8 +49,12 @@ class TreeItem(object):
 
 
 class TreeModel(QAbstractItemModel):
-    def __init__(self, data, parent=None):
-        super(TreeModel, self).__init__(parent)
+    def __init__(self, tasksFile, parent=None):
+        super().__init__(parent)
+        f = QFile(tasksFile)
+        f.open(QIODevice.ReadOnly)
+        data = f.readAll()
+        f.close()
 
         self.rootItem = TreeItem(("Title", "Summary"))
         self.setupModelData(data.split('\n'), self.rootItem)
@@ -172,7 +180,7 @@ class TreeWidget(QTreeView):
         #self.doubleClicked.connect(self.handle_dblclick)
         
 class MainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, tasksFile, parent=None):
         super(MainWindow, self).__init__(parent)
         self.mdiArea = QMdiArea(self)
         self.setCentralWidget(self.mdiArea)
@@ -197,23 +205,31 @@ class MainWindow(QMainWindow):
         self.tree.activated.connect(self.handle_dblclick)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
         
-        self.tools = ToolBar("tools.ini", self)
+        self.tools = ToolBar("data/tools.ini", self)
         self.addToolBar(self.tools)
+
+        model = TreeModel(tasksFile)
+        self.tree.setModel(model)
+        self.tree.expandAll()
+        self.tree.setColumnHidden(1,True)
+        self.dataPath = os.path.split(tasksFile)[0]
         
 
     def focusedTaskWindow(self):
         sub = self.mdiArea.currentSubWindow()
-        if sub != None:
-            return sub.widget()
-        return None
+        if sub is None:
+            return sub
+        return sub.widget()
 
     def handle_dblclick(self, index):
         try:
             iniFile = index.data(Qt.UserRole)
             if iniFile != None:
+                iniFile = os.path.join(self.dataPath, iniFile)
                 ini = QSettings(iniFile, QSettings.IniFormat)
                 ini.setIniCodec("utf-8")
-                exeClass = ["conopy.sqlexecutor", "PyExecutor"]
+                pack = "" if __package__ is None else __package__ + "."
+                exeClass = [pack + "sqlexecutor", "SqlExecutor"]
                 if "Common" in ini.childGroups():
                     ini.beginGroup("Common")
                     exeClass = ini.value("Executor", exeClass)
@@ -233,7 +249,7 @@ class MainWindow(QMainWindow):
 
 view = None
 
-def run():
+def run(tasksFile):
     import os
     import PyQt5
     import sys
@@ -243,22 +259,14 @@ def run():
 
     app = QApplication(sys.argv)
 
-    f = QFile('tasks.txt')
-    f.open(QIODevice.ReadOnly)
-    model = TreeModel(f.readAll())
-    f.close()
-
-    view = MainWindow()
+    view = MainWindow(tasksFile)
     view.setWindowTitle("Conopy")
-    view.tree.setModel(model)
-    view.tree.expandAll()
-    view.tree.setColumnHidden(1,True)
     app.focusedTaskWindow = view.focusedTaskWindow
     
     view.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    run()
+    run('../data/tasks.txt')
     
     

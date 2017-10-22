@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, os
 from PyQt5.QtCore import *
 #from PyQt5.QtWidgets import *
 from PyQt5.QtSql import *
@@ -13,7 +13,8 @@ def openDatabase(dbini):
         ini.setIniCodec("utf-8")
         ini.beginGroup("DB")
         dbdriver = ini.value("Driver")
-        dbname = ini.value("DBName")
+        dbname = str(ini.value("DBName")).format(
+            inipath=os.path.split(os.path.abspath(dbini))[0])
         dbuser = ini.value("DBUser")
         dbpass = ini.value("DBPass")
         startSql = ini.value("StartSQL","")

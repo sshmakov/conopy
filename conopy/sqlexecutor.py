@@ -1,12 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, os
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtSql import *
-import conopy.meshandler
-import conopy.dbpool as dbpool
+if __package__ is None or __package__ == '':
+    from executor import PyExecutor
+    import meshandler
+    import dbpool
+else:
+    from . import (meshandler, dbpool)
+    from .executor import PyExecutor
 
 class QueryRunner(QThread):
     def __init__(self, query, parent=None):
@@ -18,72 +23,21 @@ class QueryRunner(QThread):
         self.query.exec_()
 
 
-class PyExecutor(QDialog):
-    focused = pyqtSignal()
-    
+class SqlExecutor(PyExecutor):
     def __init__(self, iniFile, parent=None):
-        super(PyExecutor, self).__init__(parent)
-        self.setWindowTitle(QFileInfo(iniFile).baseName())
-        self.setWindowFlags(self.windowFlags()
-                            | Qt.WindowMinimizeButtonHint
-                            | Qt.WindowMaximizeButtonHint
-                            )
-        self.topLay = QVBoxLayout(self)
-        self.topLay.setContentsMargins(6,6,6,6)
-        #self.tools = ToolBar(self)
-        #self.topLay.addWidget(self.tools)
-        self.lay = QFormLayout()
-        self.topLay.addLayout(self.lay)
-        self.resultLay = QVBoxLayout()
-        self.topLay.addLayout(self.resultLay)
-        self.bar = QStatusBar(self)
-        self.topLay.addWidget(self.bar)
-        
-##        self.grid = QTableView(self)
-##        self.model = QSqlQueryModel()
-##        self.grid.setModel(self.model);
-##        self.topLay.addWidget(self.grid)
-        self.loadIni(iniFile)
+        super().__init__(iniFile, parent)
 
     def loadIni(self, iniFile):
-        #print("Ini", iniFile, "loading")
+        super().loadIni(iniFile);
         ini = QSettings(iniFile, QSettings.IniFormat)
-        ini.setIniCodec("utf-8")
-        self.inputs = {}
-        self.params = []
-        ini.beginGroup("Common")
-        wt = ini.value('Title','')
-        if wt != '': self.setWindowTitle(wt)
-        ini.endGroup()
-        ini.beginGroup("Input")
-        for key in sorted(ini.childKeys()):
-            v = ini.value(key).split(':')
-            if len(v)>1:
-                paramTitle = v[0]
-                paramValue = v[1]
-            else:
-                paramTitle = key
-                paramValue = v[0]
-            self.params.append([key, paramTitle, paramValue])
-            if paramTitle != '':
-                le = QLineEdit()
-                self.inputs[key] = le
-                le.setText(paramValue)
-                le.paramTitle = paramTitle
-                self.lay.addRow(paramTitle, le)
-        for kp in self.params:
-            key = kp[0]
-            paramTitle = kp[1]
-            paramValue = kp[2]
-            if paramTitle == '':
-                le = self.inputs[paramValue]
-                self.inputs[key] = le
-        ini.endGroup()
 
         ini.beginGroup("DB")
         self.dbini = ini.value("DBConnect")
         if self.dbini == "this":
            self.dbini = iniFile
+        self.dbini = os.path.join(
+            os.path.split(
+                os.path.abspath(self.iniFile))[0], self.dbini)
         ini.endGroup()
 
         ini.beginGroup("Run")
@@ -96,80 +50,46 @@ class PyExecutor(QDialog):
         #print(bytes(self.sql,'utf-8'))
         ini.endGroup()
         
-        self.runBtn = QPushButton("Run")
-        self.runBtn.setDefault(True)
-        self.runBtn.clicked.connect(self.run)
-        self.btnLay = QHBoxLayout()
-        self.btnLay.addStretch()
-        self.btnLay.addWidget(self.runBtn)
-        self.lay.addRow(self.btnLay)
 
-    def focusInEvent(self,event):
-        super(PyExecutor, self).focusInEvent(event)
-        self.focused.emit()
+    def createModel(self, parent=None):
+        return QSqlQueryModel(parent)
 
-    def createTableView(self):
-        view = QTableView(self)
-        vh = view.verticalHeader()
-        vh.setDefaultSectionSize(19)
-        view.setSortingEnabled(True)
-        view.horizontalHeader().setSectionsMovable(True)
-        view.horizontalHeader().setSortIndicator(-1,Qt.AscendingOrder)
-        return view
-
-    def clearResult(self):
-        self.bar.clearMessage()
-        while (self.resultLay.count() > 0 ):
-            child = self.resultLay.takeAt(0)
-            w = child.widget()
-            if w != None: w.deleteLater()
-
-    def showQueryResult(self):
+    def showResult(self):
+        super().showResult()
         err = self.query.lastError()
         if err.type() != QSqlError.NoError:
             self.bar.showMessage("Error {0} {1}".format(
                 err.number(), err.text()))
-            #res = self.query.result()
-            #print(res.lastQuery())
         else:
             self.bar.showMessage(
                 "Rows affected: {0}  Rows: {1}".format(
                     self.query.numRowsAffected(), self.query.size() ))
-            #self.queryResults = []
             res = self.query.result()
             while res and self.query.isSelect():
-                w = self.createTableView()
-                w.sqlModel = QSqlQueryModel(w)
+                w = self.createView()
+                w.sqlModel = self.createModel(w)
                 w.sqlModel.setQuery(self.query)
                 self.query.first()
-                #print("data:",res, res.isActive(), res.data(0))
                 w.proxyModel = QSortFilterProxyModel(w)
                 w.proxyModel.setSourceModel(w.sqlModel)
                 w.setModel(w.proxyModel)
                 self.resultLay.addWidget(w)
-                #self.queryResults.append(res)
-                #print(res.lastQuery())
                 if not self.query.nextResult():
                     break
                 res = self.query.result()
-        self.endRun()
 
-    def endRun(self):
-        self.runBtn.setEnabled(True)
-        
     def run(self):
         self.runBtn.setEnabled(False)
         self.clearResult()
+        
         self.db = dbpool.openDatabase(self.dbini)
         if self.db == None or not self.db.isValid() or not self.db.isOpen():
             print("No opened DB", self.dbini)
             self.endRun()
             return
-        #print("database:", self.db.databaseName())
         if self.sql != "":
             self.query = QSqlQuery(self.db)
             self.query.setNumericalPrecisionPolicy(QSql.HighPrecision)
-            #print('SQL: "%s"' % self.sql)
             self.query.prepare(self.sql)
             pi = 0
             for p in self.params:
@@ -177,20 +97,15 @@ class PyExecutor(QDialog):
                 if key in self.inputs:
                     le = self.inputs[key]
                     par = ':'+key
-                    #self.query.addBindValue(le.text())
                     self.query.bindValue(par, le.text())
                     pi = pi + 1
-                    #print(par, le.text())
             self.tr = QueryRunner(self.query)
-            self.tr.finished.connect(self.showQueryResult)
+            self.tr.finished.connect(self.showResult)
             self.tr.start();
-            #self.query.exec_()
-            #self.showQueryResult()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = PyExecutor("test-sqlite.ini")
+    ex = SqlExecutor("../data/test-sqlite.ini")
     ex.show()
 
     sys.exit(app.exec_())

@@ -1,3 +1,3 @@
-import conopy.tasktree
+from conopy import tasktree
 
-conopy.tasktree.run()
+tasktree.run('data/tasks.txt')
