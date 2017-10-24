@@ -44,6 +44,8 @@ class XmlRestExecutor(QWidget):
         ini.beginGroup("WebPage")
         self.url = ini.value('Url')
         self.bodyFile = ini.value('Body')
+        if not self.bodyFile is None:
+            self.bodyFile = os.path.join(os.path.split(os.path.abspath(iniFile))[0], self.bodyFile)
         self.method = ini.value('Method')
         if self.method == None:
             self.method = 'get' if self.bodyFile == None else 'post'

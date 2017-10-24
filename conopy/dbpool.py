@@ -13,8 +13,9 @@ def openDatabase(dbini):
         ini.setIniCodec("utf-8")
         ini.beginGroup("DB")
         dbdriver = ini.value("Driver")
-        dbname = str(ini.value("DBName")).format(
-            inipath=os.path.split(os.path.abspath(dbini))[0])
+        dbname = str(ini.value("DBName"))
+        inipath = os.path.split(os.path.abspath(dbini))[0]
+        dbname = dbname.format(inipath=inipath)
         dbuser = ini.value("DBUser")
         dbpass = ini.value("DBPass")
         startSql = ini.value("StartSQL","")

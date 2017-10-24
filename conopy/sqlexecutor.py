@@ -44,7 +44,11 @@ class SqlExecutor(PyExecutor):
         if ini.contains("SQL"):
             self.sql = ini.value("SQL")
         else:
-            f = QFile(ini.value("SQLScript"))
+            scriptFile = ini.value("SQLScript")
+            scriptFile = os.path.join(os.path.split(
+                os.path.abspath(self.iniFile))[0], scriptFile)
+            print("scriptFile:", scriptFile)
+            f = QFile(scriptFile)
             f.open(QIODevice.ReadOnly)
             self.sql = str(f.readAll(),'utf-8-sig')
         #print(bytes(self.sql,'utf-8'))
