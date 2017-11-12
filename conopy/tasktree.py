@@ -7,8 +7,10 @@ from PyQt5.QtWebEngineWidgets import *
 import os
 if __package__ is None or __package__ == '':
     from toolbar import ToolBar
+    from winlist import WinList
 else:
     from .toolbar import ToolBar
+    from .winlist import WinList
 import sys
 import importlib
 
@@ -198,13 +200,19 @@ class MainWindow(QMainWindow):
         w.setLayout(lay)
         self.tree = TreeWidget(self.treePanel)
         lay.addWidget(self.tree)
-        edit = QTextEdit(w)
-        lay.addWidget(edit)
+##        edit = QTextEdit(w)
+##        lay.addWidget(edit)
         
         self.treePanel.setWidget(w)
         self.tree.activated.connect(self.handle_dblclick)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
         
+        self.winsPanel = QDockWidget("Окна", self)
+        self.winlist = WinList(self.winsPanel)
+        self.winsPanel.setWidget(self.winlist)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.winsPanel)
+        global wins; wins = self.winsPanel
+
         self.tools = ToolBar("data/tools.ini", self)
         self.addToolBar(self.tools)
 
