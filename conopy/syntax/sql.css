@@ -1,0 +1,35 @@
+/* образец */
+.classname {
+  font-style: oblique / italic;
+  font-weight: bold;
+  font-weight: normal;
+  font-weight: 10;
+  color: #RRGGBB;
+  background: #RRGGBB;
+  text-decoration: underline;
+  text-decoration-color: #RRGGBB;
+    text-transform: uppercase;
+    text-transform: lowercase;
+    text-transform: capitalize;
+}
+
+.keyword {
+  font-weight: bold;
+  color: blue;
+  text-transform: uppercase;
+}
+
+.class {
+  font-weight: bold;
+  color: green;
+  text-transform: uppercase;
+}
+
+.comment {
+  font-weight: bold;
+  color: darkgreen;
+}
+
+.quotation {
+  color: red;
+}

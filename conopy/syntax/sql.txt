@@ -1,0 +1,128 @@
+.classname {
+  font-style: oblique / italic;
+  font-weight: bold;
+  font-weight: normal;
+  font-weight: 10;
+  color: #RRGGBB;
+  background: #RRGGBB;
+  text-decoration: underline;
+  text-decoration-color: #RRGGBB;
+    text-transform: uppercase;
+    text-transform: lowercase;
+    text-transform: capitalize;
+}
+
+.keyword {
+  font-weight: bold;
+  color: blue;
+}
+
+.class {
+  font-weight: bold;
+  color: green;
+  text-transform: uppercase;
+}
+
+.comment {
+  font-weight: bold;
+  color: darkgreen;
+}
+
+.quotation {
+  color: red;
+}
+
+Foreground  FontWeight
+Qt::blue  QFont::Bold 
+
+
+    : QSyntaxHighlighter(parent)
+{
+    HighlightingRule rule;
+    keywordFormat.setForeground(Qt::blue);
+    keywordFormat.setFontWeight(QFont::Bold);
+    QStringList keywordPatterns;
+    keywordPatterns << "\\bbigint\\b"         << "\\bbinary\\b"          << "\\bbit\\b"
+            << "\\bblob\\b"           << "\\bbool\\b"            << "\\bboolean\\b"       << "\\bchar\\b"
+            << "\\bdate\\b"           << "\\bdatetime\\b"        << "\\bdecimal\\b"       << "\\bdouble\\b"
+            << "\\benum\\b"           << "\\bfloat\\b"           << "\\bint\\b"           << "\\blongblob\\b"
+            << "\\bfloat\\b"          << "\\bint\\b"             << "\\blongblob\\b"      << "\\blongtext\\b"
+            << "\\bmediumblob\\b"     << "\\bmediumint\\b"       << "\\bmediumtext\\b"
+            << "\\bnumeric\\b"        << "\\breal\\b"            << "\\bset\\b"           << "\\bsmallint\\b"
+            << "\\btext\\b"           << "\\btime\\b"            << "\\btimestamp\\b"     << "\\btinyblob\\b"
+            << "\\btinyint\\b"        << "\\btinytext\\b"        << "\\bvarbinary\\b"
+            << "\\bvarchar\\b"        << "\\byear\\b";
+  //read mysql keywords
+    QFile file(":/dat/datafiles/keywords.dat");
+    if (!file.open(QFile::ReadOnly));
+    while (!file.atEnd()) {
+        QByteArray line = file.readLine();
+        if (!line.isEmpty())
+            keywordPatterns << tr("%1%2%3").arg("\\b", line.trimmed(), "\\b");
+             keywordPatterns << tr("%1%2%3").arg("\\b", line.trimmed().toUpper(), "\\b");
+    }
+    //
+    foreach (QString pattern, keywordPatterns) {
+        rule.pattern = QRegExp(pattern);
+        rule.format = keywordFormat;
+        rule.format.setFontCapitalization(QFont::AllUppercase);
+        highlightingRules.append(rule);
+    }
+    classFormat.setFontWeight(QFont::Bold);
+    classFormat.setForeground(Qt::green);
+    classFormat.setFontCapitalization(QFont::AllUppercase);
+    rule.pattern = QRegExp("#[^\n]*");
+    rule.format = classFormat;
+    highlightingRules.append(rule);
+
+    classFormat.setFontWeight(QFont::Bold);
+    classFormat.setForeground(Qt::darkBlue);
+    rule.pattern = QRegExp("$[^\n]");
+    rule.format = classFormat;
+    highlightingRules.append(rule);
+
+    braceFormat.setBackground(Qt::lightGray);
+    rule.pattern = QRegExp("{[A-Za-z]+");
+    rule.format = braceFormat;
+    highlightingRules.append(rule);
+
+
+    singleLineCommentFormat.setForeground(Qt::darkGreen);
+    singleLineCommentFormat.setFontWeight(QFont::Bold);
+    rule.pattern = QRegExp("//[^\n]*");
+    rule.format = singleLineCommentFormat;
+    highlightingRules.append(rule);
+
+    multiLineCommentFormat.setForeground(Qt::darkGreen);
+    multiLineCommentFormat.setFontWeight(QFont::Bold);
+    braceFormater.setForeground(Qt::magenta);
+
+    quotationFormat.setForeground(Qt::red);
+    rule.pattern = QRegExp("\".*\"");
+    rule.format = quotationFormat;
+    highlightingRules.append(rule);
+
+    singleQuotationFormat.setForeground(Qt::red);
+    rule.pattern = QRegExp("'.*'");
+    rule.format = singleQuotationFormat;
+    highlightingRules.append(rule);
+
+    singleQuotationFormat.setForeground(Qt::magenta);
+    singleQuotationFormat.setFontWeight(QFont::Bold);
+    singleQuotationFormat.setFontItalic(true);
+
+//    rule.pattern = QRegExp("`.*`");
+//    rule.format = singleQuotationFormat;
+//    highlightingRules.append(rule);
+
+    functionFormat.setFontItalic(true);
+    functionFormat.setForeground(Qt::blue);
+    rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
+    rule.format = functionFormat;
+    highlightingRules.append(rule);
+
+    commentStartExpression = QRegExp("/\\*");
+    commentEndExpression = QRegExp("\\*/");
+    braceStart = QRegExp("{");
+    braceEnd = QRegExp("}");
+}
