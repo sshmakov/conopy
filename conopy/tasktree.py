@@ -8,9 +8,11 @@ import os
 if __package__ is None or __package__ == '':
     from toolbar import ToolBar
     from winlist import WinList
+    import util
 else:
     from .toolbar import ToolBar
     from .winlist import WinList
+    import conopy.util as util
 import sys
 import importlib
 
@@ -200,19 +202,17 @@ class MainWindow(QMainWindow):
         w.setLayout(lay)
         self.tree = TreeWidget(self.treePanel)
         lay.addWidget(self.tree)
-##        edit = QTextEdit(w)
-##        lay.addWidget(edit)
         
         self.treePanel.setWidget(w)
         self.tree.activated.connect(self.handle_dblclick)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.treePanel)
-        
+
         self.winsPanel = QDockWidget("Окна", self)
         self.winlist = WinList(self.winsPanel)
         self.winsPanel.setWidget(self.winlist)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.winsPanel)
         global wins; wins = self.winsPanel
-
+        
         self.tools = ToolBar("data/tools.ini", self)
         self.addToolBar(self.tools)
 
@@ -233,29 +233,33 @@ class MainWindow(QMainWindow):
         try:
             iniFile = index.data(Qt.UserRole)
             if iniFile != None:
-                iniFile = os.path.join(self.dataPath, iniFile)
-                ini = QSettings(iniFile, QSettings.IniFormat)
-                ini.setIniCodec("utf-8")
-                pack = "" if __package__ is None else __package__ + "."
-                exeClass = [pack + "sqlexecutor", "SqlExecutor"]
-                if "Common" in ini.childGroups():
-                    ini.beginGroup("Common")
-                    exeClass = ini.value("Executor", exeClass)
-                    ini.endGroup()
-                module = importlib.import_module(exeClass[0])
-                ex = eval("module.%s(iniFile)" % exeClass[1])
-                
-                #proc = proc.strip()
-                #ex = PyExecutor(proc)
-                if ex != None:
-                    self.mdiArea.addSubWindow(ex)
-                    ex.show()
+                self.runIni(iniFile)
         except:
             print(str(sys.exc_info()[1]))
             
-            
+    def runIni(self, iniFile):
+        iniFile = os.path.join(self.dataPath, iniFile)
+        ini = QSettings(iniFile, QSettings.IniFormat)
+        ini.setIniCodec("utf-8")
+        pack = "" if __package__ is None else __package__ + "."
+        exeClass = [pack + "sqlexecutor", "SqlExecutor"]
+        if "Common" in ini.childGroups():
+            ini.beginGroup("Common")
+            exeClass = ini.value("Executor", exeClass)
+            ini.endGroup()
+        module = importlib.import_module(exeClass[0])
+        ex = eval("module.%s(iniFile)" % exeClass[1])
+        
+        #proc = proc.strip()
+        #ex = PyExecutor(proc)
+        if ex:
+            self.mdiArea.addSubWindow(ex)
+            ex.show()
+        return ex
 
-view = None
+    def subWidgetList(self):
+        wins = self.centralWidget().subWindowList()
+        return wins
 
 def run(tasksFile):
     import os
@@ -265,14 +269,18 @@ def run(tasksFile):
     pyqt = os.path.dirname(PyQt5.__file__)
     QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "plugins"))
 
+    global app, view
     app = QApplication(sys.argv)
 
     view = MainWindow(tasksFile)
+    util.mainWindow = view
     view.setWindowTitle("Conopy")
     app.focusedTaskWindow = view.focusedTaskWindow
+    app.subWidgetList = view.subWidgetList
     
     view.show()
     sys.exit(app.exec_())
+    
 
 if __name__ == '__main__':
     run('../data/tasks.txt')
