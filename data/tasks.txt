@@ -3,3 +3,9 @@
     QML Dynamic view			1					dynamicview.ini
 Web				Web-сервисы
     Курсы валют				Курсы валют				valcurs.ini
+Chinook				Chinook
+    Клиенты				Клиенты					chinook\Customer.ini
+    Сотрудники				Сотрудники				chinook\Employee.ini
+    Счета				Счета					chinook\Invoice.ini
+    Строки счетов			Строки счетов				chinook\InvoiceLine.ini
+    Треки				Треки					chinook\Tracks.ini
