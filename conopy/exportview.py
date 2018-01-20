@@ -31,22 +31,10 @@ def exportToExcel(win):
       indexes = view.selectAll()
       indexes = view.selectedIndexes()
    model = view.model()
-##   print(model)
    d = sortedIndexes(indexes)
    headers = { col:model.headerData(col, Qt.Horizontal) for col in d.columns }
    minRow = min(d.rows)
-   minCol = min(d.columns)
-##   minRow = None
-##   minCol = None
-##    headers = dict()
-##    for i in indexes:
-##        if minRow == None: minRow = i.row()
-##        if minCol == None: minCol = i.column()
-##        minRow = min(minRow, i.row())
-##        minCol = min(minCol, i.column())
-##        if not i.column() in headers:
-##            headers[i.column()] = model.headerData(i.column(), Qt.Horizontal)
-   
+   minCol = min(d.columns)   
 
    try:
       workbook = xlsxwriter.Workbook(fileName[0])

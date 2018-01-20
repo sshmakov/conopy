@@ -67,15 +67,8 @@ class WinList(QListWidget):
 
 if __name__ == '__main__':
     import tasktree
-##    tasktree.run('../data/tasks.txt')
         
     app = QApplication(sys.argv)
     w = WinList()
     w.show()
-
-##    view = MainWindow(tasksFile)
-##    view.setWindowTitle("Conopy")
-##    app.focusedTaskWindow = view.focusedTaskWindow
-##    
-##    view.show()
     sys.exit(app.exec_())
