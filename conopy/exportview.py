@@ -6,6 +6,7 @@ import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import xlsxwriter
+import conopy.util as util
 
 class ob():
    def test(self):
@@ -15,7 +16,7 @@ def exportToExcel(win):
    if win == None:
       print("No focused window")
       return
-   view = focusItemView(win)
+   view = util.focusItemView(win)
    title = win.windowTitle() + '.xlsx'
    if view == None:
       print("No focused item view")
@@ -80,12 +81,20 @@ def exportToExcel(win):
       return
 
 def copyAsHtml(win):
+   def valueStr(v):
+      if isinstance(v, QDateTime):
+        return v.toString("dd.MM.yyyy HH:mm:ss")
+      if isinstance(v, QDate):
+        return v.toString("dd.MM.yyyy")
+      if isinstance(v, QTime):
+        return v.toString("HH:mm:ss")
+      return str(v)
    if win == None:
-      print("No focused window")
+      #print("No focused window")
       return
-   view = focusItemView(win)
+   view = util.focusItemView(win)
    if view == None:
-      print("No focused item view")
+      #print("No focused item view")
       return
    indexes = view.selectedIndexes()
    if len(indexes) == 0:
@@ -96,26 +105,35 @@ def copyAsHtml(win):
    model = view.model()
    try:
       d = sortedIndexes(indexes)
+      text = ''
       html = '<table><tbody>\n'
       headers = { col:model.headerData(col, Qt.Horizontal) for col in d.columns }
-      html += '<tr>' 
+      html += '<tr>'
       for c in d.columns:
          html += '<th>%s</th>' % headers[c]
+      text += ','.join([headers[c] for c in d.columns]) + '\n'
       html += '</tr>\n' 
       for r in d.rows:
          html += '<tr>' 
+         nextV = False
          for c in d.columns:
+            if nextV:
+               text += ','
+            else:
+               nextV = True
             if (r, c) in d.indexes:
                v = d.indexes[(r,c)].data(Qt.DisplayRole)
-               html += '<td>%s</td>' % v
+               html += '<td>%s</td>' % valueStr(v)
+               text += valueStr(v)
             else:
                html += '<td></td>'
-         html += '</tr>' 
+         html += '</tr>'
+         text += '\n'
       html += '</tbody></table>'
       mime = QMimeData()
       mime.setHtml(html)
+      mime.setText(text)
       clipboard = QApplication.clipboard()
-      clipboard.setText('text');
       clipboard.setMimeData(mime)
    except:
       QMessageBox.critical(None,'Export error',str(sys.exc_info()[1]))
@@ -127,18 +145,3 @@ def sortedIndexes(indexes):
     d.columns = sorted(list(set([ i[1] for i in d.indexes ])))
     return d
 
-def headerNames(model, minCol, maxCol):
-    headers = dict()
-    for col in range(minCol, maxCol+1):
-        headers[col] = model.headerData(col, Qt.Horizontal)
-    return headers
-
-def focusItemView(win):
-    if win == None: return None
-    w = win.focusWidget()
-    if w != None and isinstance(w, QTableView):
-        return w
-    views = win.findChildren(QTableView)
-    if type(views) == type([]) and len(views)>0:
-        return views[0]
-    return None
