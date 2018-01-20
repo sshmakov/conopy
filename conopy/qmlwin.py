@@ -6,8 +6,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtQuickWidgets import *
 import PyQt5
 import os
-import util
-
+if __package__ is None or __package__ == '':
+    import util
+else:
+    from . import (util)
 
 class QmlWin(QQuickWidget):
     def __init__(self, iniFile, parent=None):
@@ -21,8 +23,7 @@ class QmlWin(QQuickWidget):
         self.qml = ini.value("Source")
         if not self.qml is None:
             self.qml = QUrl.fromUserInput(util.nearFile(iniFile, self.qml))
-            #print(self.qml)
-            self.setSource(QUrl(qml))
+            self.setSource(QUrl(self.qml))
         else:
             print("No source qml")
     
@@ -37,6 +38,6 @@ if __name__ == '__main__':
     QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "plugins"))
 
     app = QApplication(sys.argv)
-    w = QmlWin("../data/qml/dynamicview.ini")
+    w = QmlWin("../data/dynamicview.ini")
     w.show()
     sys.exit(app.exec_())
