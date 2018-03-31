@@ -4,6 +4,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtGui import QWindow
 import os
 if __package__ is None or __package__ == '':
     from toolbar import ToolBar
@@ -253,8 +254,11 @@ class MainWindow(QMainWindow):
         #proc = proc.strip()
         #ex = PyExecutor(proc)
         if ex:
+            if isinstance(ex, QWindow):
+                ex = QWidget.createWindowContainer(ex)
             self.mdiArea.addSubWindow(ex)
             ex.show()
+        ex.setWindowState(Qt.WindowMaximized)
         return ex
 
     def subWidgetList(self):

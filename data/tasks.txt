@@ -9,3 +9,5 @@ Chinook				Chinook
     Счета				Счета					chinook\Invoice.ini
     Строки счетов			Строки счетов				chinook\InvoiceLine.ini
     Треки				Треки					chinook\Tracks.ini
+Jira				Jira
+    Kanban				Kanban					kanban\kanban.ini

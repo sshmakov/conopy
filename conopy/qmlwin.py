@@ -4,6 +4,8 @@
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtQuickWidgets import *
+from PyQt5.QtQuick import *
+
 import PyQt5
 import os
 if __package__ is None or __package__ == '':
@@ -13,7 +15,10 @@ else:
 
 class QmlWin(QQuickWidget):
     def __init__(self, iniFile, parent=None):
-        super(QmlWin, self).__init__(parent)
+        super().__init__(parent)
+        self.statusChanged = self.showStatus
+        self.setMinimumSize(QSize(100,100))
+        self.setResizeMode(self.SizeRootObjectToView)
         pyqt = os.path.dirname(PyQt5.__file__)
         p = os.path.join(pyqt, "Qt", "qml")
         self.engine().addImportPath(p)
@@ -26,6 +31,9 @@ class QmlWin(QQuickWidget):
             self.setSource(QUrl(self.qml))
         else:
             print("No source qml")
+
+    def showStatus(status):
+        print(status)
     
     
 if __name__ == '__main__':
@@ -38,6 +46,6 @@ if __name__ == '__main__':
     QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "plugins"))
 
     app = QApplication(sys.argv)
-    w = QmlWin("../data/dynamicview.ini")
+    w = QmlWin("../data/kanban/kanban.ini")
     w.show()
     sys.exit(app.exec_())
