@@ -68,6 +68,7 @@ class MSSQLModel(QAbstractItemModel):
             rec = self.query.record()
             self.records.append( [ {'value': rec.value(c)}
                                    for c in range(rec.count()) ])
+            #print([ (rec.fieldName(fi), rec.field(fi).type()) for fi in range(rec.count()) ])
         self.endResetModel()
 
     def parent(self, index):
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     import dbpool
     app = QCoreApplication(sys.argv)
     m = MSSQLModel()
-    db = dbpool.openDatabase('../data/sqlite/sqlite.ini')
+    db = dbpool.openDatabase('../data/sqlite.ini')
     sql = QSqlQuery("SELECT * FROM ACCOUNTS", db)
     sql.exec_()
     m.setQuery(sql)
