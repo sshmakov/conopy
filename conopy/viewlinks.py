@@ -28,7 +28,13 @@ class LinksMenu(QMenu):
          return
       self.row = index.row()
       model = self.view.model()
-      self.headers = [ str(model.headerData(col, Qt.Horizontal)).upper() for col in range(model.columnCount()) ]
+      #self.headers = [ str(model.headerData(col, Qt.Horizontal)).upper() for col in range(model.columnCount()) ]
+      self.headers = []
+      for col in range(model.columnCount()):
+         d = model.headerData(col, Qt.Horizontal, Qt.EditRole)
+         if d is None:
+            d = model.headerData(col, Qt.Horizontal, Qt.DisplayRole)
+         self.headers.append(str(d).upper())
       self.roles = win.fieldRoles if 'fieldRoles' in dir(win) else {}  # { role: fieldName }
       self.roles = { str(r).upper():str(self.roles[r]).upper() for r in self.roles }
       print('headers',self.headers)

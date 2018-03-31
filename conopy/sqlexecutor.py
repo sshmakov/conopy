@@ -28,12 +28,15 @@ class SqlExecutor(PyExecutor):
         self.view = None
         self.proxyEnabled = True
         self.createFilterPane()
+        
 
     def createFilterPane(self):
         self.filterLay = QHBoxLayout()
         self.btnLay.insertLayout(0,self.filterLay)
         self.fieldChoice = QComboBox(self)
         self.filterLay.addWidget(self.fieldChoice)
+##        self.fieldOp = QComboBox(self)
+##        self.filterLay.addWidget(self.fieldOp)
         self.valueFind = QComboBox(self)
         self.valueFind.setEditable(True)
         self.valueFind.setMinimumWidth(200)
@@ -46,8 +49,10 @@ class SqlExecutor(PyExecutor):
         
 
     def loadIni(self, iniFile):
+        self.columnHeaders = {}
         super().loadIni(iniFile);
         ini = QSettings(iniFile, QSettings.IniFormat)
+        ini.setIniCodec('utf-8')
 
         ini.beginGroup("DB")
         self.dbini = ini.value("DBConnect")
@@ -66,6 +71,11 @@ class SqlExecutor(PyExecutor):
             f = QFile(scriptFile)
             f.open(QIODevice.ReadOnly)
             self.sql = str(f.readAll(),'utf-8-sig')
+        #print(bytes(self.sql,'utf-8'))
+        ini.endGroup()
+        ini.beginGroup("Columns")
+        for key in ini.childKeys():
+            self.columnHeaders[key.strip().upper()] = ini.value(key)
         ini.endGroup()
         
 
@@ -106,13 +116,31 @@ class SqlExecutor(PyExecutor):
             self.createViewModel()
             self.view.sqlModel.setQuery(self.query)
             self.query.first()
+            self.renameHeaders(self.view.sqlModel)
             if not self.query.nextResult():
                 break
             res = self.query.result()
+            
         self.bar.showMessage(
             "Rows affected: {0}  Rows: {1}".format(
                 self.query.numRowsAffected(), self.query.size() ))
         self.resetFieldChoice()
+
+    def renameHeaders(self, model):
+        #hv = view.horizontalHeader()
+        #model = view.model()
+        for i in range(model.columnCount()):
+            name = model.headerData(i, Qt.Horizontal, Qt.DisplayRole)
+            idx = name.strip().upper()
+            if idx in self.columnHeaders:
+                nn = self.columnHeaders[idx]
+                model.setHeaderData(i, Qt.Horizontal, name, Qt.EditRole)
+                model.setHeaderData(i, Qt.Horizontal, nn, Qt.DisplayRole)
+                #ov = model.headerData(i, Qt.Horizontal, Qt.EditRole)
+                #model.setHeaderData(i, Qt.Horizontal, nn, Qt.EditRole)
+                #d = model.headerData(i, Qt.Horizontal, Qt.DisplayRole)
+                #v = model.headerData(i, Qt.Horizontal, Qt.EditRole)
+                #print(name,'/',ov,'-->',d,'/',v)
 
     def filterClick(self):
         if self.btnFilter.isChecked():
@@ -141,7 +169,10 @@ class SqlExecutor(PyExecutor):
     def createProxy(self, parent=None):
         if parent and parent.proxyModel:
             return parent.proxyModel
-        return QSortFilterProxyModel(parent)
+        proxy = QSortFilterProxyModel(parent)
+        proxy.setDynamicSortFilter(True)
+        proxy.setSortRole(Qt.EditRole)
+        return proxy
 
     def clearResult(self):
         self.bar.clearMessage()
@@ -161,9 +192,7 @@ class SqlExecutor(PyExecutor):
             self.view.sqlModel = self.createModel(self.view)
         if self.proxyEnabled:
             if not self.view.proxyModel:
-                self.view.proxyModel = QSortFilterProxyModel(self.view)
-                self.view.proxyModel.setDynamicSortFilter(True)
-                self.view.proxyModel.setSortRole(Qt.EditRole)
+                self.view.proxyModel = self.createProxy(self.view)
             self.view.proxyModel.setSourceModel(self.view.sqlModel)
             self.view.setModel(self.view.proxyModel)
         else:
