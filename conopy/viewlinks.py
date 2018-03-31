@@ -17,11 +17,11 @@ class LinksMenu(QMenu):
       super().__init__(parent)
       self.win = win
       if not win:
-         print("No focused window")
+         #print("No focused window")
          return
       self.view = util.focusItemView(self.win)
       if not self.view:
-         print("No focused item view")
+         #print("No focused item view")
          return
       index = self.view.currentIndex()
       if not index.isValid():
@@ -37,8 +37,8 @@ class LinksMenu(QMenu):
          self.headers.append(str(d).upper())
       self.roles = win.fieldRoles if 'fieldRoles' in dir(win) else {}  # { role: fieldName }
       self.roles = { str(r).upper():str(self.roles[r]).upper() for r in self.roles }
-      print('headers',self.headers)
-      print('roles',self.roles)
+      #print('headers',self.headers)
+      #print('roles',self.roles)
       iniFile = util.nearFile('.','data/links.ini')
       ini = QSettings(iniFile, QSettings.IniFormat)
       ini.setIniCodec("utf-8")
@@ -49,7 +49,7 @@ class LinksMenu(QMenu):
          return
       if type(self.sections) != type([]):
          self.sections = [self.sections]
-      print(self.sections)
+      #print(self.sections)
       rhset = set(self.headers).union(set(self.roles))
       for s in self.sections:
          ini.beginGroup(s)
@@ -64,9 +64,9 @@ class LinksMenu(QMenu):
          exeIni = ini.value("Ini")
          ini.endGroup()
          upar = [ p.upper()  for p in params]
-         print('sect',s,'params',upar)
+         #print('sect',s,'params',upar)
          if not set(upar).issubset(rhset):
-            print('not added')
+            #print('not added')
             continue
          a = self.addAction(t)
          a.params = params
@@ -74,7 +74,7 @@ class LinksMenu(QMenu):
          a.iniFile = iniFile
          a.section = s
          a.win = win
-         print('added')
+         #print('added')
       self.triggered.connect(self.exeAction)
 
    def isValid(self):
@@ -82,7 +82,7 @@ class LinksMenu(QMenu):
 
    def exeAction(self, a):
       model = self.view.model()
-      print(2, a.params, a.exeIni)
+      #print(2, a.params, a.exeIni)
       values = {}
       for p in a.params:
          par = str(p).upper()
@@ -93,11 +93,11 @@ class LinksMenu(QMenu):
             col = self.headers.index(par)
             values[p] = model.index(self.row, col).data(Qt.DisplayRole)
          except:
-            print(str(sys.exc_info()[1]))
-            print(a.params)
+            #print(str(sys.exc_info()[1]))
+            #print(a.params)
             return
 
-      print(3, values)
+      #print(3, values)
       w = util.mainWindow.runIni(a.exeIni)
       w.clearParamValues()
       for v in values:
